@@ -1,0 +1,27 @@
+doctype html
+html
+  block vars
+  head
+    meta(charset='UTF-8')
+    title #{title}
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no')
+    meta(name='description', content=`${description}`)
+    meta(name='keywords', content=`${keywords}`)
+    meta(property='og:title', content=`${title}`)
+    meta(property='og:description', content=`${description}`)
+    meta(property='og:type', content='website')
+    meta(property='og:url', content=`${url}`)
+    meta(property='og:image', content=`${ogimage}`)
+    meta(property='og:site_name', content='BMW Brand Site')
+    meta(name='twitter:card' content='summary_large_image')
+    meta(name='twitter:site' content='@bmwjapan')
+    link(rel='stylesheet', href=`${style}`)
+    link(rel='stylesheet', href='https://fonts.googleapis.com/earlyaccess/notosansjapanese.css')
+
+  body
+    include ./header
+    block contents
+    include ./footer
+    include ./modal
+    block script
+    include ./analytics

@@ -1,0 +1,39 @@
+extends ./partial/layout.pug
+
+block vars
+  - var dateNow = Date.now();
+  - var title       = ''
+  - var description = ''
+  - var keywords    = ''
+  - var url         = ''
+  - var ogimage     = ''
+  - var site_name   = ''
+  - var style       = '/css/index.css?' + dateNow
+
+
+block script
+  script(src='js/index.bundle.js?' + dateNow)
+
+
+block contents
+  main#main(role='main')
+    h1 CarouselUI!!
+
+    //- TOP
+    section.section#top
+
+      .carousel
+        .carousel_wrapper
+          .carousel_item
+          .carousel_item
+          .carousel_item
+          .carousel_item
+          .carousel_item
+        .carousel_previous ◀︎
+        .carousel_next ▶︎
+        .carousel_indicator
+          .carousel_dot
+          .carousel_dot
+          .carousel_dot
+          .carousel_dot
+          .carousel_dot
