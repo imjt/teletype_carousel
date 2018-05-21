@@ -10,14 +10,20 @@ class Index {
    * constructor
    */
   constructor() {
-    this.carouselUI = new CarouselUI('.carousel');
+    this.carouselUI = new CarouselUI('.carousel', {
+      duration: 300,
+      easing: 'easeOutQuad',
+    });
   }
 }
 
 window.INDEX = new Index();
 
 // mi73
-// kzhr
-// soarflat
+// kzhrk
+// soarflat（hira）
 // ASugita
-// j-fujimura
+// j-fujimura (๑´ڡ`๑)
+// Yumetomo
+// murata
+// hirano

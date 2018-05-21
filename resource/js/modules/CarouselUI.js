@@ -44,18 +44,32 @@ export default class CarouselUI extends events {
   /**
    * @param selector
    */
-  constructor(selector) {
+  constructor(selector, options = {}) {
     super();
     this.$el = document.querySelector(selector);
     this.$wrapper = this.$el.querySelector(`${selector}_wrapper`);
     this.$items = this.$el.querySelectorAll(`${selector}_item`);
     this.$prev = this.$el.querySelector(`${selector}_previous`);
     this.$next = this.$el.querySelector(`${selector}_next`);
+    this.$dots = this.$el.querySelectorAll(`${selector}_dot`);
 
-    this.anime = null;
     this.currentIndex = 0;
     this.length = this.$items.length;
     this.unitWidth = 0;
+
+    this.duration = options.duration || 300;
+    this.easing = options.easing || 'easeOutQuad';
+
+    this.lastTranslateX = 0;
+    this.touched = false;
+    this.offsetX = 0;
+    this.lastDiffX = 0;
+
+    this.classes = {
+      active: 'is-active'
+    };
+
+    this.lastTranslateX = 0;
 
     this.update();
     this.bind();
@@ -74,7 +88,31 @@ export default class CarouselUI extends events {
     document.addEventListener('resize', this.update.bind(this), options);
     this.$next.addEventListener('click', this.next.bind(this), options);
     this.$prev.addEventListener('click', this.prev.bind(this), options);
+    [...this.$dots].forEach(($dot, dotIndex) => $dot.addEventListener('click', this.goTo.bind(this, dotIndex), options));
+
+    this.$el.addEventListener('touchstart', this.handleTouchStart.bind(this), options);
+    this.$el.addEventListener('touchmove', this.handleTouchMove.bind(this), options);
+    document.body.addEventListener('touchend', this.handleTouchEnd.bind(this), options);
+    this.$el.addEventListener('mousedown', this.handleMouseDown.bind(this), options);
   }
+
+  handleTouchStart(event) {
+    this.lastTranslateX = anime.getValue(this.$wrapper, 'translateX');
+    this.offsetX = 0;
+    this.touched = true;
+    this.lastClientX = (event.type === 'touchstart') ? event.touches[0].clientX : event.clientX;
+    this.lastDiffX = 0;
+  }
+
+  handleMouseDown(event) {
+    event.clientX;
+
+  }
+
+  moveHandler() {}
+
+  endHandler() {}
+
 
   next() {
     this.currentIndex = (this.currentIndex < this.length - 1) ? this.currentIndex + 1 : 0;
@@ -82,19 +120,27 @@ export default class CarouselUI extends events {
   }
 
   prev() {
-    this.currentIndex = (this.currentIndex < 0) ? 0 : this.currentIndex - 1;
+    this.currentIndex = (this.currentIndex <= 0) ? this.length - 1 : this.currentIndex - 1;
     this.goTo(this.currentIndex);
   }
 
   goTo(index) {
     console.log('goto', -this.unitWidth * this.currentIndex);
     this.currentIndex = index;
-    this.anime && this.anime.remove();
-    this.anime = anime({
+
+    [...this.$dots].forEach(($dot, dotIndex)=>{
+      (dotIndex === this.currentIndex)
+        ? $dot.classList.add(this.classes.active)
+        : $dot.classList.remove(this.classes.active);
+    });
+
+    anime.remove(this.$wrapper);
+
+    return anime({
       targets: this.$wrapper,
       translateX: -this.unitWidth * this.currentIndex,
-      easing: 'easeInOutQuad',
-      duration: 500
-    });
+      easing: this.easing,
+      duration: this.duration,
+    }).finished;
   }
 }

@@ -16,46 +16,51 @@ body {
   width: 800px;
   height: 600px;
   overlow: hidden;
-}
-.carousel_wrapper {
-  width: 800 * 5px;
-}
-.carousel_item {
-  float: left;
-  width: 780px;
-  height: 580px;
-  margin: 20px 10px;
-  background: lightgray;
-}
-.carousel_previous, .carousel_next {
-  color: gray;
-  font-size: 20px;
-}
-.carousel_previous {
-  position: absolute;
-  top: 50%;
-  left: 20px;
-  transform: translateY(-50%);
-}
-.carousel_next {
-  position: absolute;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-}
-.carousel_indicator {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  text-align: center;
-}
-.carousel_dot {
-  display: inline-block;
-  margin: 3px;
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
-  background: gray;
+
+  #{&}_wrapper {
+    width: 800 * 5px;
+  }
+  #{&}_item {
+    float: left;
+    width: 780px;
+    height: 580px;
+    margin: 20px 10px;
+    background: lightgray;
+  }
+  #{&}_previous,
+  #{&}_next {
+    color: gray;
+    font-size: 20px;
+  }
+  #{&}_previous {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+  }
+  #{&}_next {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+  }
+  #{&}_indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    text-align: center;
+  }
+  #{&}_dot {
+    display: inline-block;
+    margin: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    background: gray;
+    &.is-active {
+      background: darkgray;
+    }
+  }
 }
