@@ -127,7 +127,7 @@ export default class CarouselUI extends events {
   handleSwipeStart(event) {
     this.lastClientX =
       event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
-    this.lastTranslateX = anime.getValue(this.$wrapper, 'translateX');
+    this.lastTranslateX = anime.get(this.$wrapper, 'translateX');
     this.offsetX = 0;
     this.touched = true;
     this.lastDiffX = 0;

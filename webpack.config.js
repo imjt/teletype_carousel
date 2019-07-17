@@ -1,10 +1,12 @@
 const path = require('path');
 const webpack = require('webpack');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const TerserPlugin = require('terser-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+  .BundleAnalyzerPlugin;
 
 const config = {
   entry: {
-    index: './resource/js/index.js',
+    index: './resource/js/index.js'
   },
   output: {
     publicPath: '/js/',
@@ -18,25 +20,20 @@ const config = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'babel-loader',
-            options: {
-              presets: ['env']
-            }
+            loader: 'babel-loader'
           }
         ]
       }
     ]
   },
-  plugins: [
-    new webpack.NoEmitOnErrorsPlugin (),
-    // new webpack.optimize.CommonsChunkPlugin({
-    //   name: 'vendor',
-    //   chunks: ['index'],
-    // }),
-  ]
+  plugins: [new webpack.NoEmitOnErrorsPlugin()],
+  optimization: {
+    minimizer: []
+  }
 };
 
 if (process.env.NODE_ENV === 'development') {
+  config.mode = 'development';
   config.devtool = '#cheap-module-source-map';
   config.devServer = {
     contentBase: path.join(__dirname, 'webroot'),
@@ -46,19 +43,19 @@ if (process.env.NODE_ENV === 'development') {
   };
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
 } else {
+  config.mode = 'production';
   config.plugins.push(new BundleAnalyzerPlugin());
-  config.plugins.push(
-    new webpack.optimize.UglifyJsPlugin({
-      mangle: true,
-      compress: {
-        drop_console: true
-      },
+  config.optimization.minimizer.push(
+    new TerserPlugin({
+      terserOptions: {
+        compress: { drop_console: true }
+      }
     })
   );
   config.module.rules.push({
     enforce: 'pre',
     test: /\.js$/,
-    exclude: /node_modules/,
+    exclude: /node_modules/
   });
 }
 
