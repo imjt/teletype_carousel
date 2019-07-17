@@ -1,6 +1,8 @@
 import events from 'events';
 import anime from 'animejs';
 
+window.anime = anime;
+
 /**
  * イベントのオプション出し分け
  */
@@ -10,9 +12,9 @@ const enablePassiveEventListeners = () => {
   const opts =
     Object.defineProperty &&
     Object.defineProperty({}, 'passive', {
-     get: () => {
-       result = true;
-     }
+      get: () => {
+        result = true;
+      }
     });
 
   document.addEventListener('test', () => {}, opts);
@@ -23,7 +25,7 @@ const enablePassiveEventListeners = () => {
 /*
  * Outer Width With Margin
  */
-const outerWidth = (el) => {
+const outerWidth = el => {
   let width = el.offsetWidth;
   const style = getComputedStyle(el);
 
@@ -33,12 +35,12 @@ const outerWidth = (el) => {
 
 /**
  * カルーセル
- 要件
- 進むボタン、戻るボタン
- スワイプ
- アクティビティインジケーター（ページャー）　3/5 サムネイル
- 自動スライド
- リサイズ
+ * 要件
+ * 進むボタン、戻るボタン
+ * スワイプ
+ * アクティビティインジケーター（ページャー）　3/5 サムネイル
+ * 自動スライド
+ * リサイズ
  */
 export default class CarouselUI extends events {
   /**
@@ -60,7 +62,6 @@ export default class CarouselUI extends events {
     this.duration = options.duration || 300;
     this.easing = options.easing || 'easeOutQuad';
 
-    this.lastTranslateX = 0;
     this.touched = false;
     this.offsetX = 0;
     this.lastDiffX = 0;
@@ -69,6 +70,7 @@ export default class CarouselUI extends events {
       active: 'is-active'
     };
 
+    this.lastClientX = 0;
     this.lastTranslateX = 0;
 
     this.update();
@@ -80,47 +82,84 @@ export default class CarouselUI extends events {
   }
 
   bind() {
-    const options = enablePassiveEventListeners()
-      ? { passive: true }
-      : false;
+    const options = enablePassiveEventListeners() ? { passive: true } : false;
 
     window.addEventListener('load', this.update.bind(this), options);
     document.addEventListener('resize', this.update.bind(this), options);
     this.$next.addEventListener('click', this.next.bind(this), options);
     this.$prev.addEventListener('click', this.prev.bind(this), options);
-    [...this.$dots].forEach(($dot, dotIndex) => $dot.addEventListener('click', this.goTo.bind(this, dotIndex), options));
+    [...this.$dots].forEach(($dot, dotIndex) =>
+      $dot.addEventListener('click', this.goTo.bind(this, dotIndex), options)
+    );
 
-    this.$el.addEventListener('touchstart', this.handleTouchStart.bind(this), options);
-    this.$el.addEventListener('touchmove', this.handleTouchMove.bind(this), options);
-    document.body.addEventListener('touchend', this.handleTouchEnd.bind(this), options);
-    this.$el.addEventListener('mousedown', this.handleMouseDown.bind(this), options);
+    this.$el.addEventListener(
+      'touchstart',
+      this.handleSwipeStart.bind(this),
+      options
+    );
+    this.$el.addEventListener(
+      'touchmove',
+      this.handleSwipeMove.bind(this),
+      options
+    );
+    document.body.addEventListener(
+      'touchend',
+      this.handleSwipeEnd.bind(this),
+      options
+    );
+    this.$el.addEventListener(
+      'mousedown',
+      this.handleSwipeStart.bind(this),
+      options
+    );
+    this.$el.addEventListener(
+      'mousemove',
+      this.handleSwipeMove.bind(this),
+      options
+    );
+    document.body.addEventListener(
+      'mouseup',
+      this.handleSwipeEnd.bind(this),
+      options
+    );
   }
 
-  handleTouchStart(event) {
+  handleSwipeStart(event) {
+    this.lastClientX =
+      event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
     this.lastTranslateX = anime.getValue(this.$wrapper, 'translateX');
     this.offsetX = 0;
     this.touched = true;
-    this.lastClientX = (event.type === 'touchstart') ? event.touches[0].clientX : event.clientX;
     this.lastDiffX = 0;
   }
 
-  handleMouseDown(event) {
-    event.clientX;
+  handleSwipeMove(event) {
+    if (this.touched === false) return;
 
+    const clientX =
+      event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+    const diffX = clientX - this.lastClientX;
+    anime.set(this.$wrapper, {
+      translateX: this.lastTranslateX + diffX
+    });
+
+    // update last clientX
+    this.lastClientX = clientX;
   }
 
-  moveHandler() {}
-
-  endHandler() {}
-
+  handleSwipeEnd(event) {
+    this.touched = false;
+  }
 
   next() {
-    this.currentIndex = (this.currentIndex < this.length - 1) ? this.currentIndex + 1 : 0;
+    this.currentIndex =
+      this.currentIndex < this.length - 1 ? this.currentIndex + 1 : 0;
     this.goTo(this.currentIndex);
   }
 
   prev() {
-    this.currentIndex = (this.currentIndex <= 0) ? this.length - 1 : this.currentIndex - 1;
+    this.currentIndex =
+      this.currentIndex <= 0 ? this.length - 1 : this.currentIndex - 1;
     this.goTo(this.currentIndex);
   }
 
@@ -128,8 +167,8 @@ export default class CarouselUI extends events {
     console.log('goto', -this.unitWidth * this.currentIndex);
     this.currentIndex = index;
 
-    [...this.$dots].forEach(($dot, dotIndex)=>{
-      (dotIndex === this.currentIndex)
+    [...this.$dots].forEach(($dot, dotIndex) => {
+      dotIndex === this.currentIndex
         ? $dot.classList.add(this.classes.active)
         : $dot.classList.remove(this.classes.active);
     });
@@ -140,7 +179,7 @@ export default class CarouselUI extends events {
       targets: this.$wrapper,
       translateX: -this.unitWidth * this.currentIndex,
       easing: this.easing,
-      duration: this.duration,
+      duration: this.duration
     }).finished;
   }
 }
