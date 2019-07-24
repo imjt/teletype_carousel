@@ -1,8 +1,6 @@
 import events from 'events';
 import anime from 'animejs';
 
-window.anime = anime;
-
 /**
  * イベントのオプション出し分け
  */
@@ -17,7 +15,7 @@ const enablePassiveEventListeners = () => {
       }
     });
 
-  document.addEventListener('test', () => {}, opts);
+  document.addEventListener('test', () => { }, opts);
 
   return result;
 };
@@ -38,7 +36,7 @@ const outerWidth = el => {
  * 要件
  * 進むボタン、戻るボタン
  * スワイプ
- * アクティビティインジケーター（ページャー）　3/5 サムネイル
+ * アクティビティインジケーター（ページャー）3/5 サムネイル
  * 自動スライド
  * リサイズ
  */
@@ -55,6 +53,8 @@ export default class CarouselUI extends events {
     this.$next = this.$el.querySelector(`${selector}_next`);
     this.$dots = this.$el.querySelectorAll(`${selector}_dot`);
 
+    this.threshold = 5;
+
     this.currentIndex = 0;
     this.length = this.$items.length;
     this.unitWidth = 0;
@@ -70,8 +70,10 @@ export default class CarouselUI extends events {
       active: 'is-active'
     };
 
+    this.startTranslateX = 0;
     this.lastClientX = 0;
     this.lastTranslateX = 0;
+    this.velocityX = 0;
 
     this.update();
     this.bind();
@@ -117,6 +119,11 @@ export default class CarouselUI extends events {
       this.handleSwipeMove.bind(this),
       options
     );
+    this.$el.addEventListener(
+      'mouseleave',
+      this.handleSwipeEnd.bind(this),
+      options
+    );
     document.body.addEventListener(
       'mouseup',
       this.handleSwipeEnd.bind(this),
@@ -127,28 +134,55 @@ export default class CarouselUI extends events {
   handleSwipeStart(event) {
     this.lastClientX =
       event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
-    this.lastTranslateX = anime.get(this.$wrapper, 'translateX');
+    this.startTranslateX = parseFloat(anime.get(this.$wrapper, 'translateX'));
+    this.lastTranslateX = this.startTranslateX;
     this.offsetX = 0;
     this.touched = true;
     this.lastDiffX = 0;
+
+    anime.remove(this.$wrapper);
   }
 
   handleSwipeMove(event) {
     if (this.touched === false) return;
 
     const clientX =
-      event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+      event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
     const diffX = clientX - this.lastClientX;
+    this.lastTranslateX = this.lastTranslateX + diffX;
+
     anime.set(this.$wrapper, {
-      translateX: this.lastTranslateX + diffX
+      translateX: this.lastTranslateX
     });
 
     // update last clientX
     this.lastClientX = clientX;
+    this.velocityX = diffX;
   }
 
-  handleSwipeEnd(event) {
+  handleSwipeEnd() {
     this.touched = false;
+
+    const diffX = this.lastTranslateX - this.startTranslateX;
+
+    const isFast = Math.abs(this.velocityX) > this.threshold;
+
+    if (isFast) {
+      diffX <= 0 ? this.next() : this.prev();
+    } else {
+      this.goTo(
+        (Math.round(-this.lastTranslateX / this.unitWidth) + this.length) %
+        this.length
+      );
+    }
+
+    // if (diffX > 30) {
+    //   this.next();
+    // } else if (diffX < -30) {
+    //   this.prev();
+    // } else {
+    //   this.goTo(this.currentIndex);
+    // }
   }
 
   next() {
