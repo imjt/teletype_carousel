@@ -1,28 +1,30 @@
-html, body {
+html,
+body {
   height: auto;
 }
-body{
-  font-family: 'Noto Sans JP', メイリオ, Meiryo, "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", Osaka, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
+body {
+  font-family: "Noto Sans JP", メイリオ, Meiryo, "ヒラギノ角ゴ Pro W3",
+    "Hiragino Kaku Gothic Pro", Osaka, "ＭＳ Ｐゴシック", "MS PGothic",
+    sans-serif;
   width: 100%;
   margin: 0;
-  min-width: 1226px;
   line-height: 1.4;
   -webkit-text-size-adjust: 100%;
   color: #000;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings : "palt";
+  font-feature-settings: "palt";
   font-size: 14px;
 }
-img{
+img {
   width: 100%;
 }
 
 /*
  * header
  * ============================== */
-#header{
+#header {
   position: fixed;
   z-index: 10;
   width: 100%;
@@ -30,34 +32,34 @@ img{
   top: 0;
   left: 0;
   background: #fff;
-  transition: height .1s ease-out;
-  .logo{
+  transition: height 0.1s ease-out;
+  .logo {
     position: absolute;
     top: 11px;
-    right : 30px;
+    right: 30px;
     width: 80px;
     height: 89px;
-    a{
+    a {
       display: block;
     }
   }
-  .nav{
+  .nav {
     position: absolute;
     left: 30px;
     top: 0;
     text-align: right;
-    li{
+    li {
       display: inline-block;
       font-size: 12px;
       vertical-align: top;
-      a{
+      a {
         color: #a8884a;
-        transition: all .1s ease;
+        transition: all 0.1s ease;
         padding: 10.5px 15px;
         box-sizing: border-box;
         display: block;
         font-family: BMW-Bold;
-        &:hover{
+        &:hover {
           color: #624306;
         }
       }
@@ -65,9 +67,9 @@ img{
   }
   &.is-active {
     height: 68px;
-    .nav{
-      li{
-        a{
+    .nav {
+      li {
+        a {
           padding: 25.5px 15px;
         }
       }
@@ -76,12 +78,12 @@ img{
       top: 24px;
     }
   }
-  .sns{
+  .sns {
     position: absolute;
     top: 9px;
     right: 130px;
-    transition: top .1s ease-out;
-    li{
+    transition: top 0.1s ease-out;
+    li {
       display: inline-block;
       width: 21px;
       height: 22px;
@@ -89,26 +91,25 @@ img{
       overflow: hidden;
       margin-left: 15px;
       font-size: 0;
-      a{
+      a {
         display: block;
         height: 22px;
-        transition: all .3s ease;
-        &:hover{
-          opacity: .7;
+        transition: all 0.3s ease;
+        &:hover {
+          opacity: 0.7;
         }
       }
-      &.icon-fb a{
+      &.icon-fb a {
         background: url(/images/parts/btn_facebook.png) no-repeat center;
         background-size: 21px 22px;
       }
-      &.icon-tw a{
+      &.icon-tw a {
         background: url(/images/parts/btn_twitter.png) no-repeat center;
         background-size: 21px 22px;
       }
     }
   }
 }
-
 
 #footer {
   width: 100%;
@@ -118,29 +119,29 @@ img{
   .note {
     font-size: 10px;
     transform-origin: 0 0;
-    transform: scale(.8);
+    transform: scale(0.8);
     color: #888;
     display: inline-block;
     vertical-align: top;
   }
-  .footer-nav{
+  .footer-nav {
     display: inline-block;
     font-size: 10px;
     transform-origin: -320px 3px;
-    transform: scale(.8);
+    transform: scale(0.8);
     vertical-align: top;
-    &:after{
+    &:after {
       content: "";
       display: inline-block;
       width: 1px;
       height: 10px;
       background: #888;
       vertical-align: -1px;
-      margin-left: 10px
+      margin-left: 10px;
     }
-    li{
+    li {
       display: inline-block;
-      &:before{
+      &:before {
         content: "";
         display: inline-block;
         width: 1px;
@@ -149,16 +150,16 @@ img{
         margin: 0 10px 0 5px;
         vertical-align: -1px;
       }
-      a{
+      a {
         color: #aaa;
       }
     }
   }
-  .copyright{
+  .copyright {
     font-size: 10px;
     transform-origin: -650px 3px;
     vertical-align: top;
-    transform: scale(.8);
+    transform: scale(0.8);
     color: #888;
     display: inline-block;
   }

@@ -15,7 +15,7 @@ const enablePassiveEventListeners = () => {
       }
     });
 
-  document.addEventListener('test', () => { }, opts);
+  document.addEventListener('test', () => {}, opts);
 
   return result;
 };
@@ -86,8 +86,8 @@ export default class CarouselUI extends events {
   bind() {
     const options = enablePassiveEventListeners() ? { passive: true } : false;
 
-    window.addEventListener('load', this.update.bind(this), options);
-    document.addEventListener('resize', this.update.bind(this), options);
+    window.addEventListener('load', this.handleLoad.bind(this), options);
+    window.addEventListener('resize', this.handleResize.bind(this), options);
     this.$next.addEventListener('click', this.next.bind(this), options);
     this.$prev.addEventListener('click', this.prev.bind(this), options);
     [...this.$dots].forEach(($dot, dotIndex) =>
@@ -143,6 +143,17 @@ export default class CarouselUI extends events {
     anime.remove(this.$wrapper);
   }
 
+  handleLoad() {
+    this.update();
+  }
+
+  handleResize() {
+    this.update();
+    anime.set(this.$wrapper, {
+      translateX: -this.unitWidth * this.currentIndex
+    });
+  }
+
   handleSwipeMove(event) {
     if (this.touched === false) return;
 
@@ -172,7 +183,7 @@ export default class CarouselUI extends events {
     } else {
       this.goTo(
         (Math.round(-this.lastTranslateX / this.unitWidth) + this.length) %
-        this.length
+          this.length
       );
     }
 
@@ -215,5 +226,13 @@ export default class CarouselUI extends events {
       easing: this.easing,
       duration: this.duration
     }).finished;
+  }
+
+  // indexの値を見てwrapperの位置とitemの位置を移動させる
+  updateItem() {
+    // parseFloat(anime.get(this.$wrapper, "translateX"));
+    // anime.set(this.$wrapper, {
+    // translateX: this.lastTranslateX
+    // });
   }
 }

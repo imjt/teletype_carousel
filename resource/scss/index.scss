@@ -1,7 +1,7 @@
 @import "partial/reset";
-@import "partial/module";
-@import "partial/layout";
-@import "partial/modal";
+// @import "partial/module";
+// @import "partial/layout";
+// @import "partial/modal";
 
 body {
   background: #eee;
@@ -13,19 +13,20 @@ body {
 .carousel {
   position: relative;
   margin: 40px auto;
-  width: 800px;
-  height: 600px;
-  overlow: hidden;
+  width: 100%;
+  overflow-x: hidden;
 
   #{&}_wrapper {
-    width: 800 * 5px;
+    display: inline-flex;
+    margin-left: calc(50vw - 30vw - 10px);
   }
   #{&}_item {
-    float: left;
-    width: 780px;
-    height: 580px;
+    width: 60vw;
     margin: 20px 10px;
     background: lightgray;
+    img {
+      width: 100%;
+    }
   }
   #{&}_previous,
   #{&}_next {
@@ -45,12 +46,8 @@ body {
     transform: translateY(-50%);
   }
   #{&}_indicator {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px;
-    text-align: center;
+    display: flex;
+    justify-content: center;
   }
   #{&}_dot {
     display: inline-block;
