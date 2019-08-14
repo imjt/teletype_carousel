@@ -52,6 +52,8 @@ export default class CarouselUI extends events {
     this.$prev = this.$el.querySelector(`${selector}_previous`);
     this.$next = this.$el.querySelector(`${selector}_next`);
     this.$dots = this.$el.querySelectorAll(`${selector}_dot`);
+    this.$firstItem = this.$el.querySelector(`${selector}_item:first-child`);
+    this.$lastItem = this.$el.querySelector(`${selector}_item:last-child`);
 
     this.threshold = 5;
 
@@ -66,6 +68,8 @@ export default class CarouselUI extends events {
     this.offsetX = 0;
     this.lastDiffX = 0;
 
+    this.translateX = 0;
+
     this.classes = {
       active: 'is-active'
     };
@@ -77,6 +81,30 @@ export default class CarouselUI extends events {
 
     this.update();
     this.bind();
+  }
+
+  relocateLastItem() {
+    anime.set(this.$lastItem, {
+      translateX: -this.unitWidth * this.length
+    });
+  }
+
+  relocateFirstItem() {
+    anime.set(this.$firstItem, {
+      translateX: this.unitWidth * this.length
+    });
+  }
+
+  resetLastItem() {
+    anime.set(this.$lastItem, {
+      translateX: 0
+    });
+  }
+
+  resetFirstItem() {
+    anime.set(this.$firstItem, {
+      translateX: 0
+    });
   }
 
   update() {
@@ -145,6 +173,7 @@ export default class CarouselUI extends events {
 
   handleLoad() {
     this.update();
+    this.updateItem();
   }
 
   handleResize() {
@@ -152,6 +181,7 @@ export default class CarouselUI extends events {
     anime.set(this.$wrapper, {
       translateX: -this.unitWidth * this.currentIndex
     });
+    this.updateItem();
   }
 
   handleSwipeMove(event) {
@@ -161,6 +191,7 @@ export default class CarouselUI extends events {
       event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
     const diffX = clientX - this.lastClientX;
     this.lastTranslateX = this.lastTranslateX + diffX;
+    this.translateX = this.lastTranslateX;
 
     anime.set(this.$wrapper, {
       translateX: this.lastTranslateX
@@ -169,6 +200,8 @@ export default class CarouselUI extends events {
     // update last clientX
     this.lastClientX = clientX;
     this.velocityX = diffX;
+
+    this.updateItem();
   }
 
   handleSwipeEnd() {
@@ -224,12 +257,27 @@ export default class CarouselUI extends events {
       targets: this.$wrapper,
       translateX: -this.unitWidth * this.currentIndex,
       easing: this.easing,
-      duration: this.duration
+      duration: this.duration,
+      update: () => {
+        this.translateX = parseFloat(anime.get(this.$wrapper, 'translateX'));
+        this.updateItem();
+      }
     }).finished;
   }
 
   // indexの値を見てwrapperの位置とitemの位置を移動させる
   updateItem() {
+    console.log('-this.unitWidth * 0.5', -this.unitWidth * 0.5);
+    if (this.translateX >= -this.unitWidth * 0.5) {
+      this.relocateLastItem();
+    } else if (this.translateX < -this.unitWidth * 0.5) {
+      this.resetLastItem();
+    }
+    if (this.translateX <= -this.unitWidth * (this.length - 1.5)) {
+      this.relocateFirstItem();
+    } else if (this.translateX > -this.unitWidth * (this.length - 1.5)) {
+      this.resetFirstItem();
+    }
     // parseFloat(anime.get(this.$wrapper, "translateX"));
     // anime.set(this.$wrapper, {
     // translateX: this.lastTranslateX
