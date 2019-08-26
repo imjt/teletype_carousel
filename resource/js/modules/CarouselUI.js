@@ -73,6 +73,11 @@ export default class CarouselUI extends events {
     this.classes = {
       active: 'is-active'
     };
+    this.directions = {
+      default: 0,
+      left: 1,
+      right: 2
+    };
 
     this.startTranslateX = 0;
     this.lastClientX = 0;
@@ -81,6 +86,13 @@ export default class CarouselUI extends events {
 
     this.update();
     this.bind();
+  }
+
+  relocateWrapper(translateX) {
+    anime.set(this.$wrapper, {
+      translateX
+    });
+    this.translateX = translateX;
   }
 
   relocateLastItem() {
@@ -232,17 +244,28 @@ export default class CarouselUI extends events {
   next() {
     this.currentIndex =
       this.currentIndex < this.length - 1 ? this.currentIndex + 1 : 0;
-    this.goTo(this.currentIndex);
+    this.goTo(this.currentIndex, this.direction.right);
   }
 
   prev() {
     this.currentIndex =
       this.currentIndex <= 0 ? this.length - 1 : this.currentIndex - 1;
-    this.goTo(this.currentIndex);
+    this.goTo(this.currentIndex, this.direction.left);
   }
 
-  goTo(index) {
+  goTo(index, direction = this.directions.default) {
     console.log('goto', -this.unitWidth * this.currentIndex);
+    switch (direction) {
+      case this.directions.left:
+        // 移動距離
+        break;
+      case this.directions.right:
+        // 移動距離
+        break;
+      default:
+        break;
+    }
+
     this.currentIndex = index;
 
     [...this.$dots].forEach(($dot, dotIndex) => {
@@ -252,6 +275,26 @@ export default class CarouselUI extends events {
     });
 
     anime.remove(this.$wrapper);
+
+    /* NOTE: animejsのporpのやつ！
+    var objPropLogEl = document.querySelector('.js-object-log');
+
+    var myObject = {
+      prop1: 0,
+      prop2: '0%'
+    }
+
+    anime({
+      targets: myObject,
+      prop1: 50,
+      prop2: '100%',
+      easing: 'linear',
+      round: 1,
+      update: function() {
+        objPropLogEl.innerHTML = JSON.stringify(myObject);
+      }
+    });
+    */
 
     return anime({
       targets: this.$wrapper,
@@ -268,6 +311,13 @@ export default class CarouselUI extends events {
   // indexの値を見てwrapperの位置とitemの位置を移動させる
   updateItem() {
     console.log('-this.unitWidth * 0.5', -this.unitWidth * 0.5);
+
+    if (this.translateX >= -this.unitWidth * -0.5) {
+      this.relocateWrapper(this.translateX - this.unitWidth * this.length);
+    } else if (this.translateX <= -this.unitWidth * (this.length - 0.5)) {
+      this.relocateWrapper(this.translateX + this.unitWidth * this.length);
+    }
+
     if (this.translateX >= -this.unitWidth * 0.5) {
       this.relocateLastItem();
     } else if (this.translateX < -this.unitWidth * 0.5) {
@@ -282,5 +332,9 @@ export default class CarouselUI extends events {
     // anime.set(this.$wrapper, {
     // translateX: this.lastTranslateX
     // });
+  }
+
+  get virtualIndex() {
+    return this.translateX / this.unitWidth;
   }
 }
