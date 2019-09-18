@@ -1,35 +1,8 @@
 import events from 'events';
 import anime from 'animejs';
 
-/**
- * イベントのオプション出し分け
- */
-const enablePassiveEventListeners = () => {
-  let result = false;
-
-  const opts =
-    Object.defineProperty &&
-    Object.defineProperty({}, 'passive', {
-      get: () => {
-        result = true;
-      }
-    });
-
-  document.addEventListener('test', () => {}, opts);
-
-  return result;
-};
-
-/*
- * Outer Width With Margin
- */
-const outerWidth = el => {
-  let width = el.offsetWidth;
-  const style = getComputedStyle(el);
-
-  width += parseInt(style.marginLeft) + parseInt(style.marginRight);
-  return width;
-};
+import enablePassiveEventListeners from '../utils/enablePassiveEventListeners';
+import getOuterWidth from '../utils/getOuterWidth';
 
 /**
  * カルーセル
@@ -120,7 +93,7 @@ export default class CarouselUI extends events {
   }
 
   update() {
-    this.unitWidth = outerWidth(this.$items[0]);
+    this.unitWidth = getOuterWidth(this.$items[0]);
   }
 
   bind() {
@@ -157,27 +130,26 @@ export default class CarouselUI extends events {
       this.handleSwipeEnd.bind(this),
       options
     );
-    // TODO: 以下のイベントハンドラを有効にしても正常に動くようにする必要がある
-    // this.$el.addEventListener(
-    //   'mousedown',
-    //   this.handleSwipeStart.bind(this),
-    //   options
-    // );
-    // this.$el.addEventListener(
-    //   'mousemove',
-    //   this.handleSwipeMove.bind(this),
-    //   options
-    // );
-    // this.$el.addEventListener(
-    //   'mouseleave',
-    //   this.handleSwipeEnd.bind(this),
-    //   options
-    // );
-    // document.body.addEventListener(
-    //   'mouseup',
-    //   this.handleSwipeEnd.bind(this),
-    //   options
-    // );
+    this.$el.addEventListener(
+      'mousedown',
+      this.handleSwipeStart.bind(this),
+      options
+    );
+    this.$el.addEventListener(
+      'mousemove',
+      this.handleSwipeMove.bind(this),
+      options
+    );
+    this.$el.addEventListener(
+      'mouseleave',
+      this.handleSwipeEnd.bind(this),
+      options
+    );
+    document.body.addEventListener(
+      'mouseup',
+      this.handleSwipeEnd.bind(this),
+      options
+    );
   }
 
   handleClickNext(event) {
@@ -210,8 +182,9 @@ export default class CarouselUI extends events {
 
   handleResize() {
     this.update();
+    this.translateX = -this.unitWidth * this.currentIndex;
     anime.set(this.$wrapper, {
-      translateX: -this.unitWidth * this.currentIndex
+      translateX: this.translateX
     });
     this.updateItem();
   }
@@ -237,7 +210,6 @@ export default class CarouselUI extends events {
   }
 
   handleSwipeEnd() {
-    // TODO: 結局これいる？
     if (this.touched === false) return;
     this.touched = false;
 
@@ -253,14 +225,6 @@ export default class CarouselUI extends events {
           this.length
       );
     }
-
-    // if (diffX > 30) {
-    //   this.next();
-    // } else if (diffX < -30) {
-    //   this.prev();
-    // } else {
-    //   this.goTo(this.currentIndex);
-    // }
   }
 
   next() {
@@ -281,14 +245,20 @@ export default class CarouselUI extends events {
     let virtualIndex = this.currentIndex;
     if (
       direction === this.directions.left &&
-      this.currentIndex === this.length - 1
+      this.currentIndex === this.length - 1 &&
+      this.virtualIndex > -0.5 &&
+      this.virtualIndex < this.length / 2
     ) {
       virtualIndex = -1;
     }
-    if (direction === this.directions.right && this.currentIndex === 0) {
+    if (
+      direction === this.directions.right &&
+      this.currentIndex === 0 &&
+      this.virtualIndex < this.length - 0.5 &&
+      this.virtualIndex > this.length / 2
+    ) {
       virtualIndex = this.length;
     }
-    console.log('virtualIndex', virtualIndex);
 
     [...this.$dots].forEach(($dot, dotIndex) => {
       dotIndex === this.currentIndex
@@ -298,31 +268,9 @@ export default class CarouselUI extends events {
 
     anime.remove(this.$wrapper);
 
-    /* NOTE: animejsのporpのやつ！
-    var objPropLogEl = document.querySelector('.js-object-log');
-
-    var myObject = {
-      prop1: 0,
-      prop2: '0%'
-    }
-
-    anime({
-      targets: myObject,
-      prop1: 50,
-      prop2: '100%',
-      easing: 'linear',
-      round: 1,
-      update: function() {
-        objPropLogEl.innerHTML = JSON.stringify(myObject);
-      }
-    });
-    */
-
     const translate = {
       x: this.translateX
     };
-    console.log('start', this.translateX);
-    console.log('to', -this.unitWidth * virtualIndex);
 
     return anime({
       targets: translate,
@@ -341,8 +289,6 @@ export default class CarouselUI extends events {
 
   // indexの値を見てwrapperの位置とitemの位置を移動させる
   updateItem() {
-    console.log('-this.unitWidth * 0.5', -this.unitWidth * 0.5);
-
     if (this.translateX >= -this.unitWidth * -0.5) {
       this.relocateWrapper(this.translateX - this.unitWidth * this.length);
     } else if (this.translateX <= -this.unitWidth * (this.length - 0.5)) {
@@ -359,13 +305,9 @@ export default class CarouselUI extends events {
     } else if (this.translateX > -this.unitWidth * (this.length - 1.5)) {
       this.resetFirstItem();
     }
-    // parseFloat(anime.get(this.$wrapper, "translateX"));
-    // anime.set(this.$wrapper, {
-    // translateX: this.lastTranslateX
-    // });
   }
 
   get virtualIndex() {
-    return this.translateX / this.unitWidth;
+    return -this.translateX / this.unitWidth;
   }
 }

@@ -1,4 +1,4 @@
-@import "partial/reset";
+@import 'partial/reset';
 // @import "partial/module";
 // @import "partial/layout";
 // @import "partial/modal";
@@ -26,6 +26,7 @@ body {
     background: lightgray;
     img {
       width: 100%;
+      pointer-events: none;
     }
   }
   #{&}_previous,
