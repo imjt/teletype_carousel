@@ -6,24 +6,38 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
 
 const config = {
   entry: {
-    index: './resource/js/index.js'
+    index: './resource/ts/index.ts'
   },
   output: {
     publicPath: '/js/',
     filename: '[name].bundle.js',
     path: path.join(__dirname, 'webroot/js')
   },
+  resolve: {
+    extensions: ['.js', '.ts']
+  },
   module: {
     rules: [
       {
-        test: /\.js$/,
-        exclude: /node_modules/,
+        test: /\.ts$/,
         use: [
           {
-            loader: 'babel-loader'
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true // 型チェックしない
+            }
           }
         ]
       }
+      // {
+      //   test: /\.js$/,
+      //   exclude: /node_modules/,
+      //   use: [
+      //     {
+      //       loader: 'babel-loader'
+      //     }
+      //   ]
+      // }
     ]
   },
   plugins: [new webpack.NoEmitOnErrorsPlugin()],

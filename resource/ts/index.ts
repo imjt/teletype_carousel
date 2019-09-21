@@ -1,3 +1,5 @@
+console.log('typescript');
+
 import CarouselUI from './modules/CarouselUI';
 
 /**
