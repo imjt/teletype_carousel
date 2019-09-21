@@ -22,6 +22,9 @@ const config = {
         test: /\.ts$/,
         use: [
           {
+            loader: 'babel-loader'
+          },
+          {
             loader: 'ts-loader',
             options: {
               transpileOnly: true // 型チェックしない
@@ -29,15 +32,6 @@ const config = {
           }
         ]
       }
-      // {
-      //   test: /\.js$/,
-      //   exclude: /node_modules/,
-      //   use: [
-      //     {
-      //       loader: 'babel-loader'
-      //     }
-      //   ]
-      // }
     ]
   },
   plugins: [new webpack.NoEmitOnErrorsPlugin()],

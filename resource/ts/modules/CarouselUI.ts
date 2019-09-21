@@ -4,6 +4,28 @@ import anime from 'animejs';
 import enablePassiveEventListeners from '../utils/enablePassiveEventListeners';
 import getOuterWidth from '../utils/getOuterWidth';
 
+enum Direction {
+  Default,
+  Left,
+  Right
+}
+
+export type EventType = keyof GlobalEventHandlersEventMap;
+export type SpecificEventListener<K extends EventType> = (
+  evt: GlobalEventHandlersEventMap[K]
+) => void;
+type UpEventType = 'mouseup' | 'touchend';
+type DownEventType = 'mousedown' | 'touchstart';
+type MoveEventType = 'mousemove' | 'touchmove';
+
+const UP_EVENTS: UpEventType[] = ['mouseup', 'touchend'];
+const DOWN_EVENTS: DownEventType[] = ['mousedown', 'touchstart'];
+const MOVE_EVENTS: MoveEventType[] = ['mousemove', 'touchmove'];
+
+const cssClasses = {
+  IS_ACTIVE: 'is-active'
+};
+
 /**
  * カルーセル
  * 要件
@@ -14,17 +36,48 @@ import getOuterWidth from '../utils/getOuterWidth';
  * リサイズ
  */
 export default class CarouselUI extends events {
-  /**
-   * @param selector
-   */
-  constructor(selector, options = {}) {
+  private $el: HTMLElement;
+  private $wrapper: HTMLElement;
+  private $items: HTMLElement[];
+  private $prev: HTMLElement;
+  private $next: HTMLElement;
+  private $dots: HTMLElement[];
+  private $firstItem: HTMLElement;
+  private $lastItem: HTMLElement;
+
+  private threshold: number;
+
+  private currentIndex: number;
+  private length: number;
+  private unitWidth: number;
+
+  private duration: number;
+  private easing: anime.EasingOptions;
+
+  private touched: boolean;
+
+  private translateX: number;
+
+  private startTranslateX: number;
+  private lastClientX: number;
+  private lastTranslateX: number;
+  private velocityX: number;
+
+  constructor(
+    selector: string,
+    options: { duration?: number; easing?: anime.EasingOptions } = {}
+  ) {
     super();
     this.$el = document.querySelector(selector);
     this.$wrapper = this.$el.querySelector(`${selector}_wrapper`);
-    this.$items = this.$el.querySelectorAll(`${selector}_item`);
+    this.$items = Array.from(
+      this.$el.querySelectorAll<HTMLElement>(`${selector}_item`)
+    );
     this.$prev = this.$el.querySelector(`${selector}_previous`);
     this.$next = this.$el.querySelector(`${selector}_next`);
-    this.$dots = this.$el.querySelectorAll(`${selector}_dot`);
+    this.$dots = Array.from(
+      this.$el.querySelectorAll<HTMLElement>(`${selector}_dot`)
+    );
     this.$firstItem = this.$el.querySelector(`${selector}_item:first-child`);
     this.$lastItem = this.$el.querySelector(`${selector}_item:last-child`);
 
@@ -38,19 +91,8 @@ export default class CarouselUI extends events {
     this.easing = options.easing || 'easeOutQuad';
 
     this.touched = false;
-    this.offsetX = 0;
-    this.lastDiffX = 0;
 
     this.translateX = 0;
-
-    this.classes = {
-      active: 'is-active'
-    };
-    this.directions = {
-      default: 0,
-      left: 1,
-      right: 2
-    };
 
     this.startTranslateX = 0;
     this.lastClientX = 0;
@@ -61,7 +103,11 @@ export default class CarouselUI extends events {
     this.bind();
   }
 
-  relocateWrapper(translateX) {
+  static get cssClasses(): { [key: string]: string } {
+    return cssClasses;
+  }
+
+  relocateWrapper(translateX: number) {
     anime.set(this.$wrapper, {
       translateX
     });
@@ -97,103 +143,87 @@ export default class CarouselUI extends events {
   }
 
   bind() {
-    const options = enablePassiveEventListeners() ? { passive: true } : false;
+    const options:
+      | AddEventListenerOptions
+      | false = enablePassiveEventListeners() ? { passive: true } : false;
 
-    window.addEventListener('load', this.handleLoad.bind(this), options);
-    window.addEventListener('resize', this.handleResize.bind(this), options);
-    this.$next.addEventListener(
-      'click',
-      this.handleClickNext.bind(this),
-      options
-    );
-    this.$prev.addEventListener(
-      'click',
-      this.handleClickPrev.bind(this),
-      options
-    );
-    [...this.$dots].forEach(($dot, dotIndex) =>
-      $dot.addEventListener('click', this.goTo.bind(this, dotIndex), options)
+    window.addEventListener('load', this.handleLoad, options);
+    window.addEventListener('resize', this.handleResize, options);
+
+    this.$next.addEventListener('click', this.handleClickNext, options);
+    this.$prev.addEventListener('click', this.handleClickPrev, options);
+    this.$dots.forEach(($dot, dotIndex) =>
+      $dot.addEventListener(
+        'click',
+        () => {
+          this.goTo(dotIndex);
+        },
+        options
+      )
     );
 
-    this.$el.addEventListener(
-      'touchstart',
-      this.handleSwipeStart.bind(this),
-      options
-    );
-    this.$el.addEventListener(
-      'touchmove',
-      this.handleSwipeMove.bind(this),
-      options
-    );
-    document.body.addEventListener(
-      'touchend',
-      this.handleSwipeEnd.bind(this),
-      options
-    );
-    this.$el.addEventListener(
-      'mousedown',
-      this.handleSwipeStart.bind(this),
-      options
-    );
-    this.$el.addEventListener(
-      'mousemove',
-      this.handleSwipeMove.bind(this),
-      options
-    );
-    this.$el.addEventListener(
-      'mouseleave',
-      this.handleSwipeEnd.bind(this),
-      options
-    );
-    document.body.addEventListener(
-      'mouseup',
-      this.handleSwipeEnd.bind(this),
-      options
-    );
+    DOWN_EVENTS.forEach(eventName => {
+      this.$el.addEventListener(eventName, this.handleSwipeStart, options);
+    });
+    UP_EVENTS.forEach(eventName => {
+      document.body.addEventListener(eventName, this.handleSwipeEnd, options);
+    });
+    MOVE_EVENTS.forEach(eventName => {
+      this.$el.addEventListener(eventName, this.handleSwipeMove, options);
+    });
+    this.$el.addEventListener('mouseleave', this.handleSwipeEnd, options);
   }
 
-  handleClickNext(event) {
-    event.stopImmediatePropagation();
-    this.next();
-  }
-
-  handleClickPrev(event) {
-    event.stopImmediatePropagation();
-    this.prev();
-  }
-
-  handleSwipeStart(event) {
-    this.lastClientX =
-      event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
-    this.startTranslateX = parseFloat(anime.get(this.$wrapper, 'translateX'));
-    this.lastTranslateX = this.startTranslateX;
-    this.offsetX = 0;
-    this.touched = true;
-    this.lastDiffX = 0;
-    this.velocityX = 0;
-
-    anime.remove(this.$wrapper);
-  }
-
-  handleLoad() {
+  handleLoad = () => {
     this.update();
     this.updateItem();
-  }
+  };
 
-  handleResize() {
+  handleResize = () => {
     this.update();
     this.translateX = -this.unitWidth * this.currentIndex;
     anime.set(this.$wrapper, {
       translateX: this.translateX
     });
     this.updateItem();
-  }
+  };
 
-  handleSwipeMove(event) {
+  handleClickNext: SpecificEventListener<'click'> = event => {
+    event.stopImmediatePropagation();
+    this.next();
+  };
+
+  handleClickPrev: SpecificEventListener<'click'> = event => {
+    event.stopImmediatePropagation();
+    this.prev();
+  };
+
+  handleSwipeStart: SpecificEventListener<DownEventType> = event => {
+    // TODO: event as TouchEvent のようにアサーションしているのはイケてない書き方な気がするため
+    //       別の手段がわかり次第修正する（タイプガードでいける？）
+    this.lastClientX =
+      event.type === 'touchstart'
+        ? (event as TouchEvent).touches[0].clientX
+        : (event as MouseEvent).clientX;
+    const translateX = anime.get(this.$wrapper, 'translateX');
+    this.startTranslateX =
+      typeof translateX === 'string' ? parseFloat(translateX) : translateX;
+    this.lastTranslateX = this.startTranslateX;
+    this.touched = true;
+    this.velocityX = 0;
+
+    anime.remove(this.$wrapper);
+  };
+
+  handleSwipeMove: SpecificEventListener<MoveEventType> = event => {
     if (this.touched === false) return;
 
+    // TODO: event as TouchEvent のようにアサーションしているのはイケてない書き方な気がするため
+    //       別の手段がわかり次第修正する（タイプガードでいける？）
     const clientX =
-      event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
+      event.type === 'touchmove'
+        ? (event as TouchEvent).touches[0].clientX
+        : (event as MouseEvent).clientX;
     const diffX = clientX - this.lastClientX;
     this.lastTranslateX = this.lastTranslateX + diffX;
     this.translateX = this.lastTranslateX;
@@ -202,14 +232,13 @@ export default class CarouselUI extends events {
       translateX: this.lastTranslateX
     });
 
-    // update last clientX
     this.lastClientX = clientX;
     this.velocityX = diffX;
 
     this.updateItem();
-  }
+  };
 
-  handleSwipeEnd() {
+  handleSwipeEnd = () => {
     if (this.touched === false) return;
     this.touched = false;
 
@@ -225,26 +254,26 @@ export default class CarouselUI extends events {
           this.length
       );
     }
-  }
+  };
 
   next() {
     this.currentIndex =
       this.currentIndex < this.length - 1 ? this.currentIndex + 1 : 0;
-    this.goTo(this.currentIndex, this.directions.right);
+    this.goTo(this.currentIndex, Direction.Right);
   }
 
   prev() {
     this.currentIndex =
       this.currentIndex <= 0 ? this.length - 1 : this.currentIndex - 1;
-    this.goTo(this.currentIndex, this.directions.left);
+    this.goTo(this.currentIndex, Direction.Left);
   }
 
-  goTo(index, direction = this.directions.default) {
+  goTo(index: number, direction: Direction = Direction.Default) {
     this.currentIndex = index;
 
     let virtualIndex = this.currentIndex;
     if (
-      direction === this.directions.left &&
+      direction === Direction.Left &&
       this.currentIndex === this.length - 1 &&
       this.virtualIndex > -0.5 &&
       this.virtualIndex < this.length / 2
@@ -252,7 +281,7 @@ export default class CarouselUI extends events {
       virtualIndex = -1;
     }
     if (
-      direction === this.directions.right &&
+      direction === Direction.Right &&
       this.currentIndex === 0 &&
       this.virtualIndex < this.length - 0.5 &&
       this.virtualIndex > this.length / 2
@@ -260,10 +289,10 @@ export default class CarouselUI extends events {
       virtualIndex = this.length;
     }
 
-    [...this.$dots].forEach(($dot, dotIndex) => {
+    this.$dots.forEach(($dot, dotIndex) => {
       dotIndex === this.currentIndex
-        ? $dot.classList.add(this.classes.active)
-        : $dot.classList.remove(this.classes.active);
+        ? $dot.classList.add(cssClasses.IS_ACTIVE)
+        : $dot.classList.remove(cssClasses.IS_ACTIVE);
     });
 
     anime.remove(this.$wrapper);
@@ -281,7 +310,9 @@ export default class CarouselUI extends events {
         // 境界値から出ていないか判定、というか境界内に補正
         // DOMに反映する
         anime.set(this.$wrapper, { translateX: translate.x });
-        this.translateX = parseFloat(anime.get(this.$wrapper, 'translateX'));
+        const translateX = anime.get(this.$wrapper, 'translateX');
+        this.translateX =
+          typeof translateX === 'string' ? parseFloat(translateX) : translateX;
         this.updateItem();
       }
     }).finished;
@@ -300,6 +331,7 @@ export default class CarouselUI extends events {
     } else if (this.translateX < -this.unitWidth * 0.5) {
       this.resetLastItem();
     }
+
     if (this.translateX <= -this.unitWidth * (this.length - 1.5)) {
       this.relocateFirstItem();
     } else if (this.translateX > -this.unitWidth * (this.length - 1.5)) {
